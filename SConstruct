@@ -1,8 +1,14 @@
 # -*- Mode: Python -*-
 
-env = Environment(CXX      = 'clang++',
+import os
+
+env = Environment(CXX      = 'g++',
                   CXXFLAGS = [ '-O2', '-std=c++11' ],
                   LIBS     = [ 'boost_system' ])
+
+# This override is for travis
+if "COMPILER" in os.environ:
+    env['CXX'] = os.environ["COMPILER"]
 
 env.ParseConfig('pkg-config --cflags --libs gloox')
 
