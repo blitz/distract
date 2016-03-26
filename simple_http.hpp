@@ -7,6 +7,7 @@
 
 #include "safe_cb.hpp"
 
+/// A very simple (braindead) HTTP client.
 class simple_http : public std::enable_shared_from_this<simple_http> {
   using tcp         = boost::asio::ip::tcp;
   using callback_fn = std::function<bool(std::string const &)>;

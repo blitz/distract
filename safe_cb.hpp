@@ -7,6 +7,8 @@
 template <typename PARENT, typename FN>
 class safe_cb { };
 
+/// A wrapper for std::function that makes sure that we don't have dangling this
+/// pointers by forcing users to also pass a shared_ptr.
 template <typename TYPE, typename RET, typename... ARGS>
 class safe_cb<TYPE, RET(ARGS...)> {
 
