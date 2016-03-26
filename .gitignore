@@ -1,13 +1,11 @@
-# Emacs
 *~
-
-# scons
 /.scons*
-
-# Compiled Object files
 *.o
 *.a
+*.pyc
 
+/wisdom/*.inc
 /wisdomdb.inc
 /distract
+/scripts/tweet_dumper_config.py
 
