@@ -1,70 +1,74 @@
 #include "bot.hpp"
-#include "stock.hpp"
-
 #include <gloox/connectiontcpclient.h>
-#include <boost/asio.hpp>
-#include <sys/utsname.h>
 
-std::map<std::string, BotRoom::cmd_fn_t> BotRoom::cmd_map {
-  { "help",    &BotRoom::cmd_help },
-  { "version", &BotRoom::cmd_version },
-  { "blame",   &BotRoom::cmd_blame },
-  { "wisdom",  &BotRoom::cmd_wisdom },
-  { "stock",   &BotRoom::cmd_stock },
-};
-
-void BotRoom::cmd_wisdom(std::string const &, std::string const &)
+void BotRoom::handleMUCMessage(gloox::MUCRoom *room, const gloox::Message &msg, bool priv)
 {
-  send(wisdom.get());
-}
+  std::smatch match;
+  std::string const msg_body { msg.body() };
 
-void BotRoom::cmd_blame(std::string const &, std::string const &)
-{
-  auto it = participants.begin();
-  std::advance(it, random_index(participants.size()));
+  if (std::regex_match(msg_body, match, re_cmd)) {
+    std::string cmd = match.str(1);
+    std::string body = match.str(2);
 
-  send(std::string("It's ") + *it + "'s fault!");
-}
+    printf("Matched! cmd='%s' %s\n", cmd.c_str(), body.c_str());
 
-void BotRoom::cmd_stock(std::string const &, std::string const &body)
-{
-  bool is_empty = body.size() == 0;
-  Bot *bot = static_cast<Bot *>(m_parent);
+    auto cpair = cmd_map.find(cmd);
 
-  stock_price = std::make_shared<StockPriceFetcher>(bot->get_io_service(), is_empty ? "FEYE" : body,
-                                                    [this] (std::string const &name,
-                                                            std::string const &value) {
-                                                      send(name + ": " + value);
-                                                    });
-  stock_price->start();
-}
-
-void BotRoom::cmd_version(std::string const &, std::string const &)
-{
-  struct utsname name;
-
-  if (uname(&name) == 0) {
-    std::stringstream ss;
-
-    ss << name.sysname << " " << name.release
-       << " " << name.version << " " << name.machine;
-
-    send(ss.str());
-
-  } else {
-    send("uname() failed...");
+    if (cpair != cmd_map.end()) {
+      (this->*(cpair->second))(cmd, body);
+    } else {
+      send("No command '" + cmd + "'. Try 'help' instead.");
+    }
   }
 }
 
-void BotRoom::cmd_help(std::string const &, std::string const &)
+void BotRoom::handleMUCParticipantPresence(gloox::MUCRoom *room,
+                                           const gloox::MUCRoomParticipant participant,
+                                           const gloox::Presence &presence)
 {
-  std::stringstream ss;
+  std::string const nick = participant.nick->resource();
 
-  ss << "I know the following commands:";
-  for (auto p : cmd_map) {
-    ss << " " << p.first;
+  // Ignore the bot's presence.
+  if (nick == this->nick()) return;
+
+  if (presence.presence() == gloox::Presence::Available) {
+    participants.insert(nick);
+  } else if (presence.presence() == gloox::Presence::Unavailable) {
+    participants.erase(nick);
   }
-  send(ss.str());
+}
+
+void Bot::onConnect()
+{
+  printf("Connected.\n");
+
+  for (auto &room : rooms_to_join) {
+    room_handlers.emplace_back(this, room);
+  }
+}
+
+void Bot::onDisconnect(gloox::ConnectionError e)
+{
+  printf("Disconnected.\n");
+  room_handlers.clear();
+}
+
+bool Bot::onTLSConnect(gloox::CertInfo const &info)
+{
+  printf("XXX No TLS certifacte check.\n");
+  return true;
+}
+
+void Bot::handleMessage(const gloox::Message &stanza,
+                        gloox::MessageSession *session)
+{
+  if (stanza.subtype() != gloox::Message::Chat) {
+    printf("Ignoring message: %s\n", stanza.tag()->xml().c_str());
+    return;
+  }
+
+  gloox::Message msg( gloox::Message::Chat, stanza.from(), "nothing to see here..." );
+  gloox::Client::send( msg );
 }
 
 void Bot::async_read()
@@ -81,7 +85,7 @@ void Bot::async_read()
 }
 
 Bot::Bot(boost::asio::io_service &asio_io, gloox::JID const &jid,
-    std::string const &password, std::vector<std::string> const &rooms)
+         std::string const &password, std::vector<std::string> const &rooms)
   : stream(asio_io), gloox::Client(jid, password), rooms_to_join(rooms)
 {
   gloox::Client::registerMessageHandler(this);

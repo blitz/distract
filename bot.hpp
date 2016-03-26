@@ -46,37 +46,18 @@ public:
   void cmd_help   (std::string const &, std::string const &);
   void cmd_stock  (std::string const &, std::string const &);
 
-  virtual void handleMUCMessage(gloox::MUCRoom *room, const gloox::Message &msg, bool priv) override
-  {
-    std::smatch match;
-    std::string const msg_body { msg.body() };
+  void handleMUCMessage(gloox::MUCRoom *room, const gloox::Message &msg, bool priv) override;
 
-    if (std::regex_match(msg_body, match, re_cmd)) {
-      std::string cmd = match.str(1);
-      std::string body = match.str(2);
-
-      printf("Matched! cmd='%s' %s\n", cmd.c_str(), body.c_str());
-
-      auto cpair = cmd_map.find(cmd);
-
-      if (cpair != cmd_map.end()) {
-        (this->*(cpair->second))(cmd, body);
-      } else {
-        send("No command '" + cmd + "'. Try 'help' instead.");
-      }
-    }
-  }
-
-  virtual void handleMUCError(gloox::MUCRoom *room, gloox::StanzaError error) override
+  void handleMUCError(gloox::MUCRoom *room, gloox::StanzaError error) override
   {
     printf("Could not join room %s reason %u\n", room->name().c_str(), error);
   }
 
-  virtual void handleMUCItems(gloox::MUCRoom *room, const gloox::Disco::ItemList &items ) override
+  void handleMUCItems(gloox::MUCRoom *room, const gloox::Disco::ItemList &items ) override
   {
   }
 
-  virtual bool handleMUCRoomCreation(gloox::MUCRoom *room ) override
+  bool handleMUCRoomCreation(gloox::MUCRoom *room ) override
   {
     printf("Created room: %s\n", room->name().c_str());
 
@@ -84,31 +65,19 @@ public:
     return true;
   }
 
-  virtual void handleMUCParticipantPresence(gloox::MUCRoom *room, const gloox::MUCRoomParticipant participant,
-                                            const gloox::Presence &presence) override
-  {
-    std::string const nick = participant.nick->resource();
+  void handleMUCParticipantPresence(gloox::MUCRoom *room, const gloox::MUCRoomParticipant participant,
+                                    const gloox::Presence &presence) override;
 
-    // Ignore the bot's presence.
-    if (nick == this->nick()) return;
-
-    if (presence.presence() == gloox::Presence::Available) {
-      participants.insert(nick);
-    } else if (presence.presence() == gloox::Presence::Unavailable) {
-      participants.erase(nick);
-    }
-  }
-
-  virtual void handleMUCInfo(gloox::MUCRoom *room, int features, const std::string &name,
-                             const gloox::DataForm *infoForm) override
+  void handleMUCInfo(gloox::MUCRoom *room, int features, const std::string &name,
+                     const gloox::DataForm *infoForm) override
   { }
 
-  virtual void handleMUCSubject(gloox::MUCRoom *room, const std::string &nick,
-                                const std::string &subject) override
+  void handleMUCSubject(gloox::MUCRoom *room, const std::string &nick,
+                        const std::string &subject) override
   { }
 
-  virtual void handleMUCInviteDecline (gloox::MUCRoom *room, const gloox::JID &invitee,
-                                       const std::string &reason) override
+  void handleMUCInviteDecline (gloox::MUCRoom *room, const gloox::JID &invitee,
+                               const std::string &reason) override
   { }
 
   BotRoom(gloox::ClientBase *parent, gloox::JID const &jid)
@@ -129,7 +98,7 @@ class Bot : public std::enable_shared_from_this<Bot>,
   using stream_descriptor = boost::asio::posix::stream_descriptor;
 
   stream_descriptor stream;
-  
+
   std::vector<BotRoom> room_handlers;
 
   /// A list of rooms we are going to join when we are connected.
@@ -146,38 +115,14 @@ public:
     return stream.get_io_service();
   }
 
-  virtual void onConnect() override
-  {
-    printf("Connected.\n");
+  void onConnect() override;
 
-    for (auto &room : rooms_to_join) {
-      room_handlers.emplace_back(this, room);
-    }
-  }
+  void onDisconnect(gloox::ConnectionError e) override;
 
-  virtual void onDisconnect(gloox::ConnectionError e) override
-  {
-    printf("Disconnected.\n");
-    room_handlers.clear();
-  }
+  bool onTLSConnect(gloox::CertInfo const &info) override;
 
-  virtual bool onTLSConnect(gloox::CertInfo const &info) override
-  {
-    printf("XXX No TLS certifacte check.\n");
-    return true;
-  }
-
-  virtual void handleMessage(const gloox::Message &stanza,
-                             gloox::MessageSession *session = 0) override
-  {
-    if (stanza.subtype() != gloox::Message::Chat) {
-      printf("Ignoring message: %s\n", stanza.tag()->xml().c_str());
-      return;
-    }
-
-    gloox::Message msg( gloox::Message::Chat, stanza.from(), "nothing to see here..." );
-    gloox::Client::send( msg );
-  }
+  void handleMessage(const gloox::Message &stanza,
+                     gloox::MessageSession *session = nullptr) override;
 };
 
 // EOF
