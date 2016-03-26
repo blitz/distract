@@ -80,14 +80,7 @@ public:
                                const std::string &reason) override
   { }
 
-  BotRoom(gloox::ClientBase *parent, gloox::JID const &jid)
-    : gloox::MUCRoom(parent, jid, this),
-      re_cmd(jid.resource() + "[,:]\\s*(\\S+)\\s*(.*)")
-  {
-    join();
-    send("Hello!");
-  }
-
+  BotRoom(gloox::ClientBase *parent, gloox::JID const &jid);
 };
 
 class Bot : public std::enable_shared_from_this<Bot>,

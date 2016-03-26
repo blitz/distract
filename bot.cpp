@@ -3,6 +3,12 @@
 
 void BotRoom::handleMUCMessage(gloox::MUCRoom *room, const gloox::Message &msg, bool priv)
 {
+  if (msg.when()) {
+    printf("Ignoring delayed message.\n");
+    // Discard any history from the room. Otherwise, we may answer old commands.
+    return;
+  }
+
   std::smatch match;
   std::string const msg_body { msg.body() };
 
@@ -36,6 +42,14 @@ void BotRoom::handleMUCParticipantPresence(gloox::MUCRoom *room,
   } else if (presence.presence() == gloox::Presence::Unavailable) {
     participants.erase(nick);
   }
+}
+
+BotRoom::BotRoom(gloox::ClientBase *parent, gloox::JID const &jid)
+  : gloox::MUCRoom(parent, jid, this),
+    re_cmd(jid.resource() + "[,:]\\s*(\\S+)\\s*(.*)")
+{
+  join();
+  send("Hello!");
 }
 
 void Bot::onConnect()
