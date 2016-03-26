@@ -9,7 +9,7 @@
 int main(int argc, char **argv)
 {
   if (argc < 3) {
-    fprintf(stderr, "Usage: bot jid password rooms...\n");
+    fprintf(stderr, "Usage: distract jid password rooms...\n");
     return EXIT_FAILURE;
   }
 

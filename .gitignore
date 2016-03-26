@@ -8,5 +8,6 @@
 *.o
 *.a
 
+/wisdomdb.inc
 /distract
 

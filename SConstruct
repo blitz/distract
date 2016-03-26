@@ -6,6 +6,8 @@ env = Environment(CXX      = 'clang++',
 
 env.ParseConfig('pkg-config --cflags --libs gloox')
 
+env.Command('wisdomdb.inc', Glob('wisdom/*.inc'), "./scripts/wisdomdb.py $SOURCES > $TARGET")
+
 env.Program('distract', Glob('*.cpp'))
 
 # EOF

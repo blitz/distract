@@ -3,11 +3,7 @@
 
 namespace {
   char const * const wisdom_db[] {
-#include "wisdom/picardtips_tweets.inc"
-#include "wisdom/data_tips_tweets.inc"
-#include "wisdom/laforgetips_tweets.inc"
-#include "wisdom/worfemail_tweets.inc"
-#include "wisdom/locutustips_tweets.inc"
+#include "wisdomdb.inc"
   };
 
   constexpr const size_t wisdom_entries = sizeof(wisdom_db)/sizeof(wisdom_db[0]);
