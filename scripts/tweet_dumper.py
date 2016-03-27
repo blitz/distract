@@ -29,6 +29,10 @@ def get_all_tweets(screen_name):
         #save most recent tweets
         alltweets.extend(new_tweets)
 
+        if len(alltweets) == 0:
+            print("No tweets?")
+            return
+
         #save the id of the oldest tweet less one
         oldest = alltweets[-1].id - 1
 
@@ -58,4 +62,5 @@ def get_all_tweets(screen_name):
 if __name__ == '__main__':
     #["picardtips", "laforgetips", "worfemail", "data_tips", "locutusTips", "wesleytips"]:
     for user in sys.argv[1:]:
+        print("Fetching tweets for %s..." % user )
         get_all_tweets(user)
