@@ -1,6 +1,6 @@
 # distract
 
-A XMPP bot for multi-user chat.
+distract is a very simple, Affero GPL-licensed XMPP bot for multi-user chat.
 
 [![Build Status](https://travis-ci.org/blitz/distract.svg?branch=master)](https://travis-ci.org/blitz/distract)
 
