@@ -2,7 +2,7 @@
 
 import os
 
-env = Environment(CXX      = 'g++',
+env = Environment(CXX      = 'clang++',
                   CXXFLAGS = [ '-O2', '-std=c++11' ],
                   LIBS     = [ 'boost_system' ])
 
